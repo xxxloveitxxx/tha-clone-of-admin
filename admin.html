@@ -1,0 +1,871 @@
+<!-- templates/admin.html -->
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Cold Outreach System</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <style>
+    body{font-family:Inter,system-ui,Segoe UI,Arial;padding:30px;background:#f3f4f6}
+    .wrap{max-width:1200px;margin:0 auto}
+    .card{background:white;padding:18px;border-radius:8px;box-shadow:0 6px 18px rgba(15,23,42,.06);margin-bottom:16px}
+    input,textarea,button,select{width:100%;padding:10px;margin-top:8px;border:1px solid #e5e7eb;border-radius:6px}
+    button{background:#1f2937;color:white;border:0;cursor:pointer}
+    .section{margin-bottom:20px}
+    .followup-section{border-left:3px solid #e5e7eb;padding-left:15px;margin-bottom:15px}
+    .tab{display:none}
+    .tab.active{display:block}
+    .tab-buttons{margin-bottom:20px}
+    .tab-button{display:inline-block;padding:10px 20px;background:#e5e7eb;cursor:pointer;margin-right:5px}
+    .tab-button.active{background:#1f2937;color:white}
+    table{width:100%;border-collapse:collapse}
+    th,td{padding:10px;text-align:left;border-bottom:1px solid #e5e7eb}
+    .account-status {display: flex; align-items: center; margin-bottom: 10px;}
+    .status-indicator {width: 12px; height: 12px; border-radius: 50%; margin-right: 10px;}
+    .status-good {background-color: #10B981;}
+    .status-warning {background-color: #F59E0B;}
+    .status-error {background-color: #EF4444;}
+    .workflow-status {margin-top: 20px; padding: 10px; border-radius: 5px; background: #f8f9fa;}
+    .workflow-success {background: #d1e7dd; color: #0f5132;}
+    .workflow-failure {background: #f8d7da; color: #842029;}
+    .workflow-pending {background: #fff3cd; color: #664d03;}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Cold Outreach System</h1>
+    
+    <div class="tab-buttons">
+      <div class="tab-button active" onclick="showTab('import')">Import Leads</div>
+      <div class="tab-button" onclick="showTab('campaigns')">Campaigns</div>
+      <div class="tab-button" onclick="showTab('templates')">Templates</div>
+      <div class="tab-button" onclick="showTab('analytics')">Analytics</div>
+      <div class="tab-button" onclick="showTab('smtp')">SMTP Accounts</div>
+      <div class="tab-button" onclick="showTab('status')">Account Status</div>
+      <div class="tab-button" onclick="showTab('responded')">Responded Leads</div>
+      <div class="tab-button" onclick="showTab('workflow')">Workflow</div>
+    </div>
+    
+    <!-- Import Leads Tab -->
+    <div id="import" class="tab active">
+      <div class="card">
+        <h3>Import Leads (CSV)</h3>
+        <p>CSV must include columns: email, name, city, brokerage, service. Other columns will be stored as custom fields.</p>
+        <input type="file" id="csvFile" accept=".csv">
+        <input type="text" id="listName" placeholder="List name (e.g. 'NYC Real Estate Agents')">
+        <button onclick="importLeads()">Import Leads</button>
+        <div id="importStatus"></div>
+      </div>
+      
+      <div class="card">
+        <h3>Current Lists</h3>
+        <div id="listsContainer">Loading...</div>
+      </div>
+    </div>
+    
+    <!-- Campaigns Tab -->
+    <div id="campaigns" class="tab">
+      <div class="card">
+        <h3>Create New Campaign</h3>
+        <input id="campaignName" placeholder="Campaign name">
+        <select id="campaignList">
+          <option value="">Select a list</option>
+        </select>
+        <input id="campaignSubject" placeholder="Email subject (use {name}, {city}, etc.)">
+        <textarea id="campaignBody" placeholder="Email body (HTML with variables like {name}, {city}, {brokerage}, {service})" rows="8"></textarea>
+        
+        <div class="section">
+          <h4>Follow-up Emails</h4>
+          <div id="followups">
+            <div class="followup-section">
+              <input class="followup-days" type="number" placeholder="Days after previous" value="2" min="1">
+              <input class="followup-subject" placeholder="Follow-up subject">
+              <textarea class="followup-body" placeholder="Follow-up body" rows="4"></textarea>
+            </div>
+          </div>
+          <button onclick="addFollowup()">+ Add Follow-up</button>
+        </div>
+        
+        <label>
+          <input type="checkbox" id="sendImmediately"> Send initial emails immediately
+        </label>
+        
+        <button onclick="createCampaign()">Create Campaign</button>
+        <div id="campaignStatus"></div>
+      </div>
+      
+      <div class="card">
+        <h3>Existing Campaigns</h3>
+        <div id="campaignsContainer">Loading...</div>
+      </div>
+    </div>
+    
+    <!-- Templates Tab -->
+    <div id="templates" class="tab">
+      <div class="card">
+        <h3>Email Templates</h3>
+        <p>Available variables: {name}, {email}, {city}, {brokerage}, {service}, and any other columns from your CSV.</p>
+        <div id="templatesContainer">Loading...</div>
+      </div>
+    </div>
+    
+    <!-- SMTP Accounts Tab -->
+    <div id="smtp" class="tab">
+      <div class="card">
+        <h3>Add SMTP Account</h3>
+        <input type="email" id="smtpEmail" placeholder="Email address">
+        <input type="text" id="smtpDisplayName" placeholder="Display name">
+        <input type="text" id="smtpHost" placeholder="SMTP Host (e.g., smtp.gmail.com)">
+        <input type="number" id="smtpPort" placeholder="SMTP Port (e.g., 587)" value="587">
+        <input type="text" id="smtpUsername" placeholder="SMTP Username (usually your email)">
+        <input type="password" id="smtpPassword" placeholder="SMTP Password">
+        <input type="text" id="imapHost" placeholder="IMAP Host (optional)">
+        <input type="number" id="imapPort" placeholder="IMAP Port (optional)" value="993">
+        <button onclick="addSmtpAccount()">Add SMTP Account</button>
+        <div id="smtpStatus"></div>
+      </div>
+      <div class="card">
+        <h3>Existing SMTP Accounts</h3>
+        <div id="smtpAccountsContainer">Loading...</div>
+      </div>
+    </div>
+    
+    <!-- Account Status Tab -->
+    <div id="status" class="tab">
+      <div class="card">
+        <h3>Account Sending Status</h3>
+        <p>Daily limit: 50 emails per account</p>
+        <div id="accountStatusContainer">Loading...</div>
+      </div>
+    </div>
+<!--------------------------------------------------------------------->
+<!-- Add this to the tab buttons section -->
+
+
+<!-- Add this as a new tab -->
+<div id="analytics" class="tab">
+  <div class="card">
+    <h3>Link Click Analytics</h3>
+    
+    <div class="campaign-selector">
+      <select id="campaignSelect">
+        <option value="">Select a campaign</option>
+      </select>
+    </div>
+    
+    <div id="clickAnalytics">
+      <table>
+        <thead>
+          <tr>
+            <th>Lead Email</th>
+            <th>URL Clicked</th>
+            <th>Time</th>
+            <th>AI Demo Used</th> <!-- New column -->
+          </tr>
+        </thead>
+        <tbody id="clickData">
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+<!---------------------------------------->
+
+    
+    <!-- Responded Leads Tab -->
+    <div id="responded" class="tab">
+      <div class="card">
+        <h3>Leads Who Have Responded</h3>
+        <div id="respondedLeadsContainer">Loading...</div>
+      </div>
+    </div>
+    
+    <!-- Workflow Tab -->
+    <div id="workflow" class="tab">
+      <div class="card">
+        <h3>GitHub Actions Workflow</h3>
+        <p>Trigger the email sending process manually or view the status of recent runs.</p>
+        <button onclick="triggerWorkflow()">Run Email Sending Now</button>
+        <div id="workflowStatus"></div>
+      </div>
+      
+      <div class="card">
+        <h3>Recent Workflow Runs</h3>
+        <div id="workflowRunsContainer">Loading workflow runs...</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let currentLists = [];
+    let currentCampaigns = [];
+    let smtpAccounts = [];
+    let accountStatuses = [];
+    let respondedLeads = [];
+    
+    function showTab(tabName) {
+      document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+      document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+      document.getElementById(tabName).classList.add('active');
+      document.querySelector(`.tab-button[onclick="showTab('${tabName}')"]`).classList.add('active');
+      
+      if (tabName === 'campaigns') {
+        loadLists();
+        loadCampaigns();
+      } else if (tabName === 'import') {
+        loadLists();
+      } else if (tabName === 'templates') {
+        loadTemplates();
+      } else if (tabName === 'analytics') {
+        loadCampaignsForAnalytics();
+      } else if (tabName === 'smtp') {
+        loadSmtpAccounts();
+      } else if (tabName === 'status') {
+        loadAccountStatus();
+      } else if (tabName === 'responded') {
+        loadRespondedLeads();
+      } else if (tabName === 'workflow') {
+        loadWorkflowRuns();
+      }
+    }
+    
+    async function loadLists() {
+      try {
+        const response = await fetch('/api/leads/lists');
+        if (response.ok) {
+          const data = await response.json();
+          currentLists = data.lists || [];
+          renderLists();
+          populateListDropdown();
+        } else {
+          console.error('Failed to load lists:', response.status);
+        }
+      } catch (error) {
+        console.error('Error loading lists:', error);
+      }
+    }
+    
+    function renderLists() {
+      const container = document.getElementById('listsContainer');
+      if (currentLists.length === 0) {
+        container.innerHTML = '<p>No lists yet. Import a CSV to create your first list.</p>';
+        return;
+      }
+      
+      let html = '<table><tr><th>List Name</th><th>Lead Count</th><th>Actions</th></tr>';
+      currentLists.forEach(list => {
+        html += `<tr>
+          <td>${list.list_name}</td>
+          <td>${list.lead_count}</td>
+          <td><button onclick="viewList('${list.list_name}')">View</button></td>
+        </tr>`;
+      });
+      html += '</table>';
+      container.innerHTML = html;
+    }
+    
+    function populateListDropdown() {
+      const dropdown = document.getElementById('campaignList');
+      dropdown.innerHTML = '<option value="">Select a list</option>';
+      currentLists.forEach(list => {
+        dropdown.innerHTML += `<option value="${list.list_name}">${list.list_name} (${list.lead_count} leads)</option>`;
+      });
+    }
+    
+    async function importLeads() {
+      const fileInput = document.getElementById('csvFile');
+      const listName = document.getElementById('listName').value;
+      const status = document.getElementById('importStatus');
+      
+      if (!fileInput.files.length) {
+        status.innerText = 'Please select a CSV file';
+        return;
+      }
+      
+      if (!listName) {
+        status.innerText = 'Please enter a list name';
+        return;
+      }
+      
+      const formData = new FormData();
+      formData.append('file', fileInput.files[0]);
+      formData.append('list_name', listName);
+      
+      status.innerText = 'Uploading...';
+      
+      try {
+        const response = await fetch('/api/leads/import', {
+          method: 'POST',
+          body: formData
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+          status.innerText = `Successfully imported ${data.imported} leads.`;
+          fileInput.value = '';
+          document.getElementById('listName').value = '';
+          loadLists();
+        } else {
+          status.innerText = `Error: ${data.error}`;
+        }
+      } catch (error) {
+        status.innerText = 'Error uploading file';
+        console.error('Upload error:', error);
+      }
+    }
+    
+    function addFollowup() {
+      const container = document.getElementById('followups');
+      const newFollowup = document.createElement('div');
+      newFollowup.className = 'followup-section';
+      newFollowup.innerHTML = `
+        <input class="followup-days" type="number" placeholder="Days after previous" value="2" min="1">
+        <input class="followup-subject" placeholder="Follow-up subject">
+        <textarea class="followup-body" placeholder="Follow-up body" rows="4"></textarea>
+        <button onclick="this.parentNode.remove()">Remove</button>
+      `;
+      container.appendChild(newFollowup);
+    }
+    
+    async function createCampaign() {
+      const name = document.getElementById('campaignName').value;
+      const list = document.getElementById('campaignList').value;
+      const subject = document.getElementById('campaignSubject').value;
+      const body = document.getElementById('campaignBody').value;
+      const sendImmediately = document.getElementById('sendImmediately').checked;
+      const status = document.getElementById('campaignStatus');
+      
+      if (!name || !list || !subject || !body) {
+        status.innerText = 'Please fill all required fields';
+        return;
+      }
+      
+      // Collect follow-ups
+      const followups = [];
+      document.querySelectorAll('.followup-section').forEach(section => {
+        const days = section.querySelector('.followup-days').value;
+        const subject = section.querySelector('.followup-subject').value;
+        const body = section.querySelector('.followup-body').value;
+        
+        if (subject && body) {
+          followups.push({
+            days_after: parseInt(days),
+            subject: subject,
+            body: body
+          });
+        }
+      });
+      
+      status.innerText = 'Creating campaign...';
+      
+      try {
+        const response = await fetch('/api/campaigns', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: name,
+            list_name: list,
+            subject: subject,
+            body: body,
+            follow_ups: followups,
+            send_immediately: sendImmediately
+          })
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+          status.innerText = `Campaign created successfully!`;
+          if (sendImmediately) {
+            status.innerText += ' Initial emails queued for sending.';
+          }
+          // Clear form
+          document.getElementById('campaignName').value = '';
+          document.getElementById('campaignSubject').value = '';
+          document.getElementById('campaignBody').value = '';
+          document.getElementById('followups').innerHTML = `
+            <div class="followup-section">
+              <input class="followup-days" type="number" placeholder="Days after previous" value="2" min="1">
+              <input class="followup-subject" placeholder="Follow-up subject">
+              <textarea class="followup-body" placeholder="Follow-up body" rows="4"></textarea>
+            </div>
+          `;
+          loadCampaigns();
+        } else {
+          status.innerText = `Error: ${data.error}`;
+        }
+      } catch (error) {
+        status.innerText = 'Error creating campaign';
+        console.error('Campaign error:', error);
+      }
+    }
+    
+    async function loadCampaigns() {
+      try {
+        const response = await fetch('/api/campaigns');
+        if (response.ok) {
+          const data = await response.json();
+          currentCampaigns = data.campaigns;
+          renderCampaigns();
+        }
+      } catch (error) {
+        console.error('Error loading campaigns:', error);
+      }
+    }
+    
+    function renderCampaigns() {
+      const container = document.getElementById('campaignsContainer');
+      if (currentCampaigns.length === 0) {
+        container.innerHTML = '<p>No campaigns yet.</p>';
+        return;
+      }
+      
+      let html = '<table><tr><th>Name</th><th>List</th><th>Created</th><th>Actions</th></tr>';
+      currentCampaigns.forEach(campaign => {
+        html += `<tr>
+          <td>${campaign.name}</td>
+          <td>${campaign.list_name}</td>
+          <td>${new Date(campaign.created_at).toLocaleDateString()}</td>
+          <td>
+            <button onclick="viewCampaign(${campaign.id})">View</button>
+            <button onclick="queueFollowup(${campaign.id}, 1)">Send Follow-up 1</button>
+          </td>
+        </tr>`;
+      });
+      html += '</table>';
+      container.innerHTML = html;
+    }
+    
+    async function queueFollowup(campaignId, sequence) {
+      try {
+        const response = await fetch('/api/queue-followup', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            campaign_id: campaignId,
+            sequence: sequence
+          })
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+          alert(`Queued ${data.queued} follow-up emails`);
+        } else {
+          alert(`Error: ${data.error}`);
+        }
+      } catch (error) {
+        alert('Error queueing follow-up');
+        console.error('Queue error:', error);
+      }
+    }
+    
+    async function loadTemplates() {
+      // In a real implementation, you'd fetch templates from the server
+      const container = document.getElementById('templatesContainer');
+      container.innerHTML = `
+        <p>Sample templates will be shown here. In a full implementation, you would manage templates separately.</p>
+        <div class="card">
+          <h4>Initial Outreach Template</h4>
+          <pre>
+Subject: Connecting with {name} from {brokerage}
+
+Hi {name},
+
+I noticed you're working at {brokerage} in {city}. I'd love to connect and discuss how our {service} might benefit your clients.
+
+Best regards,
+Your Name
+          </pre>
+        </div>
+        <div class="card">
+          <h4>Follow-up Template</h4>
+          <pre>
+Subject: Following up
+
+Hi {name},
+
+Just following up on my previous email. Would you have time for a quick call this week to discuss {service}?
+
+Best regards,
+Your Name
+          </pre>
+        </div>
+      `;
+    }
+    
+    async function loadSmtpAccounts() {
+      try {
+        const response = await fetch('/api/smtp-accounts');
+        if (response.ok) {
+          const data = await response.json();
+          smtpAccounts = data.accounts || [];
+          renderSmtpAccounts();
+        }
+      } catch (error) {
+        console.error('Error loading SMTP accounts:', error);
+      }
+    }
+    
+    function renderSmtpAccounts() {
+      const container = document.getElementById('smtpAccountsContainer');
+      if (smtpAccounts.length === 0) {
+        container.innerHTML = '<p>No SMTP accounts yet. Add your first account above.</p>';
+        return;
+      }
+      
+      let html = '<table><tr><th>Email</th><th>Display Name</th><th>SMTP Host</th><th>Actions</th></tr>';
+      smtpAccounts.forEach(account => {
+        html += `<tr>
+          <td>${account.email}</td>
+          <td>${account.display_name}</td>
+          <td>${account.smtp_host}:${account.smtp_port}</td>
+          <td>
+            <button onclick="testSmtpAccount(${account.id})">Test</button>
+            <button onclick="deleteSmtpAccount(${account.id})">Delete</button>
+          </td>
+        </tr>`;
+      });
+      html += '</table>';
+      container.innerHTML = html;
+    }
+    
+    async function addSmtpAccount() {
+      const email = document.getElementById('smtpEmail').value;
+      const displayName = document.getElementById('smtpDisplayName').value;
+      const host = document.getElementById('smtpHost').value;
+      const port = document.getElementById('smtpPort').value;
+      const username = document.getElementById('smtpUsername').value;
+      const password = document.getElementById('smtpPassword').value;
+      const imapHost = document.getElementById('imapHost').value;
+      const imapPort = document.getElementById('imapPort').value;
+      const status = document.getElementById('smtpStatus');
+      
+      if (!email || !host || !port || !username || !password) {
+        status.innerText = 'Please fill all required fields (email, host, port, username, password)';
+        return;
+      }
+      
+      // Validate port numbers
+      if (isNaN(port) || port <= 0 || port > 65535) {
+        status.innerText = 'SMTP port must be a valid port number (1-65535)';
+        return;
+      }
+      
+      if (imapPort && (isNaN(imapPort) || imapPort <= 0 || imapPort > 65535)) {
+        status.innerText = 'IMAP port must be a valid port number (1-65535)';
+        return;
+      }
+      
+      status.innerText = 'Adding account...';
+      
+      try {
+        const requestBody = {
+          email: email,
+          display_name: displayName || email,
+          smtp_host: host,
+          smtp_port: parseInt(port),
+          smtp_username: username,
+          smtp_password: password
+        };
+        
+        // Only add IMAP fields if provided
+        if (imapHost) requestBody.imap_host = imapHost;
+        if (imapPort) requestBody.imap_port = parseInt(imapPort);
+        
+        const response = await fetch('/api/smtp-accounts', {
+          method: 'POST',
+          headers: { 
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(requestBody)
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+          status.innerText = 'SMTP account added successfully!';
+          // Clear form
+          document.getElementById('smtpEmail').value = '';
+          document.getElementById('smtpDisplayName').value = '';
+          document.getElementById('smtpHost').value = '';
+          document.getElementById('smtpPort').value = '587';
+          document.getElementById('smtpUsername').value = '';
+          document.getElementById('smtpPassword').value = '';
+          document.getElementById('imapHost').value = '';
+          document.getElementById('imapPort').value = '993';
+          
+          loadSmtpAccounts();
+        } else {
+          status.innerText = `Error: ${data.error || 'Unknown error'} - ${data.detail || 'No details provided'}`;
+        }
+      } catch (error) {
+        status.innerText = 'Error adding SMTP account: ' + error.message;
+        console.error('SMTP account error:', error);
+      }
+    }
+    
+    async function testSmtpAccount(accountId) {
+      alert(`Testing SMTP account ${accountId} functionality would be implemented here`);
+      // In a real implementation, you'd call a test endpoint
+    }
+    
+    async function deleteSmtpAccount(accountId) {
+      if (confirm('Are you sure you want to delete this SMTP account?')) {
+        alert(`Deleting SMTP account ${accountId} functionality would be implemented here`);
+        // In a real implementation, you'd call a delete endpoint
+      }
+    }
+    
+    async function loadAccountStatus() {
+      try {
+        const response = await fetch('/api/account-status');
+        if (response.ok) {
+          const data = await response.json();
+          accountStatuses = data.accounts || [];
+          renderAccountStatus();
+        }
+      } catch (error) {
+        console.error('Error loading account status:', error);
+      }
+    }
+    
+    function renderAccountStatus() {
+      const container = document.getElementById('accountStatusContainer');
+      if (accountStatuses.length === 0) {
+        container.innerHTML = '<p>No accounts found.</p>';
+        return;
+      }
+      
+      let html = '<table><tr><th>Account</th><th>Sent Today</th><th>Remaining</th><th>Status</th></tr>';
+      accountStatuses.forEach(account => {
+        const statusClass = account.remaining_today > 10 ? 'status-good' : 
+                           account.remaining_today > 0 ? 'status-warning' : 'status-error';
+        
+        html += `<tr>
+          <td>${account.display_name} (${account.email})</td>
+          <td>${account.sent_today}</td>
+          <td>${account.remaining_today}</td>
+          <td><div class="account-status"><div class="status-indicator ${statusClass}"></div> ${account.remaining_today > 0 ? 'Active' : 'Limit Reached'}</div></td>
+        </tr>`;
+      });
+      html += '</table>';
+      container.innerHTML = html;
+    }
+    
+    async function loadRespondedLeads() {
+      try {
+        const response = await fetch('/api/responded-leads');
+        if (response.ok) {
+          const data = await response.json();
+          respondedLeads = data.responded_leads || [];
+          renderRespondedLeads();
+        }
+      } catch (error) {
+        console.error('Error loading responded leads:', error);
+      }
+    }
+    
+    function renderRespondedLeads() {
+      const container = document.getElementById('respondedLeadsContainer');
+      if (respondedLeads.length === 0) {
+        container.innerHTML = '<p>No leads have responded yet.</p>';
+        return;
+      }
+      
+      let html = '<table><tr><th>Email</th><th>Name</th><th>Responded At</th><th>Original List</th></tr>';
+      respondedLeads.forEach(lead => {
+        html += `<tr>
+          <td>${lead.email}</td>
+          <td>${lead.name} ${lead.last_name || ''}</td>
+          <td>${new Date(lead.responded_at).toLocaleString()}</td>
+          <td>${lead.list_name}</td>
+        </tr>`;
+      });
+      html += '</table>';
+      container.innerHTML = html;
+    }
+    
+    async function triggerWorkflow() {
+      const status = document.getElementById('workflowStatus');
+      status.innerHTML = '<div class="workflow-pending">Triggering workflow...</div>';
+      
+      try {
+        // This would need to be implemented with a backend endpoint that has a GitHub token
+        // For security reasons, we don't want to store GitHub tokens in frontend code
+        const response = await fetch('/api/trigger-workflow', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' }
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+          status.innerHTML = '<div class="workflow-success">Workflow triggered successfully!</div>';
+          // Reload workflow runs after a short delay
+          setTimeout(loadWorkflowRuns, 2000);
+        } else {
+          status.innerHTML = `<div class="workflow-failure">Error: ${data.error || 'Failed to trigger workflow'}</div>`;
+        }
+      } catch (error) {
+        status.innerHTML = `<div class="workflow-failure">Error: ${error.message}</div>`;
+        console.error('Workflow trigger error:', error);
+      }
+    }
+    
+    async function loadWorkflowRuns() {
+      const container = document.getElementById('workflowRunsContainer');
+      container.innerHTML = 'Loading workflow runs...';
+      
+      try {
+        // This would need to be implemented with a backend endpoint
+        const response = await fetch('/api/workflow-runs');
+        if (response.ok) {
+          const data = await response.json();
+          renderWorkflowRuns(data.runs || []);
+        } else {
+          container.innerHTML = 'Error loading workflow runs';
+        }
+      } catch (error) {
+        container.innerHTML = 'Error loading workflow runs';
+        console.error('Workflow runs error:', error);
+      }
+    }
+    
+    function renderWorkflowRuns(runs) {
+      const container = document.getElementById('workflowRunsContainer');
+      if (runs.length === 0) {
+        container.innerHTML = '<p>No workflow runs found.</p>';
+        return;
+      }
+      
+      let html = '<table><tr><th>Run ID</th><th>Status</th><th>Triggered At</th><th>Conclusion</th></tr>';
+      runs.forEach(run => {
+        const statusClass = run.status === 'completed' ? 'workflow-success' : 
+                           run.status === 'in_progress' ? 'workflow-pending' : 'workflow-failure';
+        
+        html += `<tr>
+          <td>${run.id}</td>
+          <td><span class="${statusClass}">${run.status}</span></td>
+          <td>${new Date(run.created_at).toLocaleString()}</td>
+          <td>${run.conclusion || 'N/A'}</td>
+        </tr>`;
+      });
+      html += '</table>';
+      container.innerHTML = html;
+    }
+  // Add this to the showTab function
+
+
+// Add these new functions
+async function loadCampaignsForAnalytics() {
+  try {
+    const response = await fetch('/api/campaigns');
+    if (response.ok) {
+      const data = await response.json();
+      const select = document.getElementById('campaignSelect');
+      select.innerHTML = '<option value="">Select a campaign</option>';
+      
+      data.campaigns.forEach(campaign => {
+        const option = document.createElement('option');
+        option.value = campaign.id;
+        option.textContent = campaign.name;
+        select.appendChild(option);
+      });
+      
+      // Add event listener for campaign selection
+      select.addEventListener('change', function() {
+        const campaignId = this.value;
+        if (campaignId) {
+          loadCampaignClicks(campaignId);
+        } else {
+          document.getElementById('clickData').innerHTML = '';
+        }
+      });
+    }
+  } catch (error) {
+    console.error('Error loading campaigns for analytics:', error);
+  }
+}
+
+async function loadCampaignClicks(campaignId) {
+  try {
+    const response = await fetch(`/api/campaigns/${campaignId}/clicks`);
+    if (response.ok) {
+      const data = await response.json();
+      const tbody = document.getElementById('clickData');
+      tbody.innerHTML = '';
+      
+      if (data.clicks && data.clicks.length > 0) {
+        data.clicks.forEach(click => {
+          const row = document.createElement('tr');
+          row.innerHTML = `
+            <td>${click.leads?.email || 'Unknown'}</td>
+            <td>${click.url}</td>
+            <td>${new Date(click.clicked_at).toLocaleString()}</td>
+          `;
+          tbody.appendChild(row);
+        });
+      } else {
+        tbody.innerHTML = '<tr><td colspan="3">No clicks recorded for this campaign</td></tr>';
+      }
+    }
+  } catch (error) {
+    console.error('Error loading campaign clicks:', error);
+  }
+}
+
+// Add this function to check AI usage for a lead
+// Update this function in admin.html
+async function checkAIUsage(leadId) {
+    try {
+        const response = await fetch(`/api/leads/${leadId}/ai-usage`);
+        const data = await response.json();
+        
+        if (data.ai_usage) {
+            return `<i class="fas fa-check" style="color: #64ffda;"></i> (${data.ai_usage.usage_count}x)`;
+        } else {
+            return '<i class="fas fa-times" style="color: #8892b0;"></i>';
+        }
+    } catch (error) {
+        console.error('Error checking AI usage:', error);
+        return '<i class="fas fa-question" style="color: #8892b0;"></i>';
+    }
+}
+
+// Update the loadCampaignClicks function to include AI usage
+async function loadCampaignClicks(campaignId) {
+  try {
+    const response = await fetch(`/api/campaigns/${campaignId}/clicks`);
+    if (response.ok) {
+      const data = await response.json();
+      const tbody = document.getElementById('clickData');
+      tbody.innerHTML = '';
+      
+      if (data.clicks && data.clicks.length > 0) {
+        for (const click of data.clicks) {
+          const aiUsageHTML = await checkAIUsage(click.lead_id);
+          
+          const row = document.createElement('tr');
+          row.innerHTML = `
+            <td>${click.leads?.email || 'Unknown'}</td>
+            <td>${click.url}</td>
+            <td>${new Date(click.clicked_at).toLocaleString()}</td>
+            <td>${aiUsageHTML}</td>
+          `;
+          tbody.appendChild(row);
+        }
+      } else {
+        tbody.innerHTML = '<tr><td colspan="4">No clicks recorded for this campaign</td></tr>';
+      }
+    }
+  } catch (error) {
+    console.error('Error loading campaign clicks:', error);
+  }
+}    
+    // Initial load
+    loadLists();
+  </script>
+</body>
+</html>
