@@ -222,6 +222,22 @@
       console.log('Supabase initialized');
     }
 
+    // Simple event tracker (beacon) - FIXED to use GET instead of POST
+    function trackEvent(name, props = {}) {
+      try {
+        // Convert to query parameters for GET request
+        const params = new URLSearchParams({ event: name, ts: new Date().toISOString(), ...props });
+        const url = `https://tha-clone-of-admin.onrender.com/api/track?${params}`;
+        
+        // Use image beacon for GET requests
+        const img = new Image(1, 1);
+        img.src = url;
+      } catch (e) {
+        // ignore tracking errors
+        console.warn('trackEvent error', e);
+      }
+    }
+
     // -----------------------------
     // Toast helper
     // -----------------------------
@@ -334,7 +350,7 @@
       setCookie('free_trials', JSON.stringify(trials), 7);
     }
 
-     // -----------------------------
+      // -----------------------------
     // Generate response (calls your backend)
     // -----------------------------
     async function generateResponse() {
@@ -365,11 +381,13 @@
       trackEvent('generate_clicked', { lead_id: leadId });
 
       try {
-        // Call the actual API endpoint
+        // Call the actual API endpoint with CORS mode
         const response = await fetch('https://tha-clone-of-admin.onrender.com/api/generate-reply-prompt', {
           method: 'POST',
+          mode: 'cors',
           headers: {
             'Content-Type': 'application/json',
+            'Origin': 'https://xxxloveitxxx.github.io'
           },
           body: JSON.stringify({ prompt: input })
         });
@@ -387,7 +405,11 @@
         if (leadId) { 
           fetch('https://tha-clone-of-admin.onrender.com/api/record-ai-usage', { 
             method: 'POST', 
-            headers: { 'Content-Type': 'application/json' }, 
+            mode: 'cors',
+            headers: { 
+              'Content-Type': 'application/json',
+              'Origin': 'https://xxxloveitxxx.github.io'
+            }, 
             body: JSON.stringify({ lead_id: leadId }) 
           }).catch(() => {}); 
         }
