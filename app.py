@@ -60,22 +60,25 @@ def render_email_template(template, lead_data):
     rendered = rendered.replace('  ', '&nbsp;&nbsp;')
     
     return rendered
+
 # Add this import at the top of app.py
 from flask_cors import CORS
 
 load_dotenv()
 app = Flask(__name__, template_folder="templates")
 
-# Add CORS support - allow requests from your Vercel domain
+# Add CORS support - allow requests from your Vercel domain AND GitHub Pages
 CORS(app, resources={
     r"/api/*": {
         "origins": [
             "https://closefaster.vercel.app",
             "http://localhost:3000",  # For local development
-            "http://127.0.0.1:3000"   # For local development
+            "http://127.0.0.1:3000",   # For local development
+            "https://xxxloveitxxx.github.io",  # Add GitHub Pages domain
+            "https://xxxloveitxxx.github.io/tha-clone-of-admin/"  # Add specific path
         ],
         "methods": ["GET", "POST", "OPTIONS"],
-        "allow_headers": ["Content-Type", "Authorization"]
+        "allow_headers": ["Content-Type", "Authorization", "Origin"]
     }
 })
 
@@ -507,13 +510,22 @@ def api_get_lead_clicks(lead_id):
     except Exception as e:
         return jsonify({"error": "internal_server_error", "detail": str(e)}), 500
 
-@app.route('/api/track', methods=['GET'])
+@app.route('/api/track', methods=['GET', 'POST'])  # Allow both GET and POST
 def api_track_click():
     try:
-        lead_id = request.args.get('lead_id')
-        campaign_id = request.args.get('campaign_id')
-        url = request.args.get('url')
-        email_queue_id = request.args.get('eqid', None)
+        if request.method == 'POST':
+            # Handle POST request with JSON data
+            data = request.get_json(force=True)
+            lead_id = data.get('lead_id')
+            campaign_id = data.get('campaign_id')
+            url = data.get('url')
+            email_queue_id = data.get('eqid', None)
+        else:
+            # Handle GET request with query parameters
+            lead_id = request.args.get('lead_id')
+            campaign_id = request.args.get('campaign_id')
+            url = request.args.get('url')
+            email_queue_id = request.args.get('eqid', None)
         
         if not all([lead_id, campaign_id, url]):
             return "Missing parameters", 400
@@ -526,12 +538,19 @@ def api_track_click():
             "email_queue_id": email_queue_id
         }).execute()
         
-        # Redirect to the original URL
-        return redirect(url)
+        # For POST requests, return JSON response instead of redirecting
+        if request.method == 'POST':
+            return jsonify({"ok": True}), 200
+        else:
+            # For GET requests, redirect to the original URL
+            return redirect(url)
         
     except Exception as e:
         print(f"Error tracking click: {str(e)}")
-        return "Error tracking click", 500
+        if request.method == 'POST':
+            return jsonify({"error": "internal_server_error", "detail": str(e)}), 500
+        else:
+            return "Error tracking click", 500
 
 
 
@@ -558,7 +577,7 @@ def generate_reply_prompt():
     if request.method == "OPTIONS":
         # Handle preflight request
         response = jsonify({"status": "ok"})
-        response.headers.add("Access-Control-Allow-Origin", "https://xxxloveitxxx.github.io/tha-clone-of-admin/")
+        response.headers.add("Access-Control-Allow-Origin", "https://xxxloveitxxx.github.io")
         response.headers.add("Access-Control-Allow-Headers", "Content-Type")
         return response
 
