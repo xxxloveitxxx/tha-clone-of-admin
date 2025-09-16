@@ -600,18 +600,7 @@
       };
     }
 
-    // -----------------------------
-    // Simple event tracker
-    // -----------------------------
-    function trackEvent(name, props = {}) {
-      try {
-        const payload = JSON.stringify({ event: name, ts: new Date().toISOString(), ...props });
-        navigator.sendBeacon('https://tha-clone-of-admin.onrender.com/api/track', payload);
-      } catch (e) {
-        console.warn('trackEvent error', e);
-      }
-    }
-
+ 
     // -----------------------------
     // Start
     // -----------------------------
