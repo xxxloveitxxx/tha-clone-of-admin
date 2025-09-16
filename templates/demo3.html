@@ -334,7 +334,7 @@
       setCookie('free_trials', JSON.stringify(trials), 7);
     }
 
-    // -----------------------------
+     // -----------------------------
     // Generate response (calls your backend)
     // -----------------------------
     async function generateResponse() {
@@ -362,47 +362,63 @@
       if (aiResponse) aiResponse.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating your response...';
       if (responseContainer) responseContainer.style.display = 'block';
 
-      try {
-        // Call your actual API endpoint
-        const res = await fetch('https://tha-clone-of-admin.onrender.com/api/generate-reply', {
-          method: 'POST', 
-          headers: { 'Content-Type': 'application/json' }, 
-          body: JSON.stringify({ 
-            prompt: input,
-            lead_id: leadId 
-          })
-        });
-        
-        if (!res.ok) throw new Error('API request failed');
-        
-        const data = await res.json();
-        aiResponse.textContent = data.reply || data.text || JSON.stringify(data);
+      trackEvent('generate_clicked', { lead_id: leadId });
 
-        // Record usage if needed
+      try {
+        // Call the actual API endpoint
+        const response = await fetch('https://tha-clone-of-admin.onrender.com/api/generate-reply-prompt', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ prompt: input })
+        });
+
+        if (!response.ok) {
+          throw new Error(`API error: ${response.status}`);
+        }
+
+        const data = await response.json();
+        
+        // Display the AI-generated response
+        aiResponse.textContent = data.reply;
+
+        // record usage if needed
         if (leadId) { 
-          fetch('https://your-api-endpoint.com/api/record-usage', { 
+          fetch('https://tha-clone-of-admin.onrender.com/api/record-ai-usage', { 
             method: 'POST', 
             headers: { 'Content-Type': 'application/json' }, 
             body: JSON.stringify({ lead_id: leadId }) 
           }).catch(() => {}); 
         }
 
-      } catch (err) {
-        console.error(err);
-        // Fallback response if API fails
-        aiResponse.textContent = "Hi there! Thanks for your message. I'd be happy to help you with your real estate needs. When were you thinking of coming by for a viewing?";
-        showToast('Unable to generate response (fallback shown).', 'error');
-      } finally {
+        trackEvent('response_viewed', { lead_id: leadId });
+        
         if (generateBtn) { generateBtn.innerHTML = '<i class="fas fa-robot"></i> Generate AI Response'; generateBtn.disabled = false; }
         if (responseContainer) responseContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }
-
-      // If a non-unlimited session and aiCount hits 0, nudge to signup
-      if (!aiUnlimited && aiCount === 0) {
-        setTimeout(() => { 
-          showToast("You've used your free AI responses! Start your free trial for unlimited access.", 'info'); 
-          document.querySelector('#trial').scrollIntoView({ behavior: 'smooth' }); 
-        }, 900);
+        
+        // If a non-unlimited session and aiCount hits 0, nudge to signup
+        if (!aiUnlimited && aiCount === 0) {
+          setTimeout(() => { 
+            showToast("You've used your free AI responses! Start your free trial for unlimited access.", 'info'); 
+            document.querySelector('#trial').scrollIntoView({ behavior: 'smooth' }); 
+          }, 900);
+        }
+      } catch (err) {
+        console.error('API call failed:', err);
+        // Fallback to mock response if API fails
+        const sampleResponses = [
+          "Hi Jennifer! Thanks for reaching out about our open house at 123 Elm St. Yes, it's still happening this Sunday from 1-4 PM. Would you like me to save you a spot or would a different time work better for you?",
+          "Hello Jennifer! The open house at 123 Elm St is definitely still on for Sunday from 1-4 PM. We'd love to have you stop by. Is there a particular time that works best for you so I can make sure to greet you personally?",
+          "Hi there Jennifer! Yes, our open house at 123 Elm St is happening this Sunday from 1-4 PM. I'd be happy to answer any questions you have about the property. What time were you thinking of coming by?"
+        ];
+        
+        const randomResponse = sampleResponses[Math.floor(Math.random() * sampleResponses.length)];
+        aiResponse.textContent = randomResponse;
+        showToast('Using demo response (API unavailable)', 'error');
+        
+        if (generateBtn) { generateBtn.innerHTML = '<i class="fas fa-robot"></i> Generate AI Response'; generateBtn.disabled = false; }
+        if (responseContainer) responseContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }
     }
 
