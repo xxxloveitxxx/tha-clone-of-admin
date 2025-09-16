@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+  <title>REPLYZEAI - Answer Every Open House Lead in 60 Seconds</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet"/>
+  <style>
+    /* Core Animations */
+    @keyframes gradientBG { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+    @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(247,37,133,0.4); } 70% { box-shadow: 0 0 0 12px rgba(247,37,133,0); } 100% { box-shadow: 0 0 0 0 rgba(247,37,133,0); } }
+
+    /* Base Styles */
+    *{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;}
+    body{background:linear-gradient(-45deg,#0a192f,#112240,#1a2f4b,#233554);background-size:400% 400%;animation:gradientBG 25s ease infinite;color:#fff;overflow-x:hidden;}
+    .progress-bar{height:4px;background:#64ffda;position:fixed;top:0;left:0;z-index:10000;transition:width .4s cubic-bezier(.22,.61,.36,1);}
+
+    /* Navigation - Enhanced for Mobile */
+    .nav{padding:1rem 5%;display:flex;justify-content:space-between;align-items:center;background:rgba(10,25,47,.9);backdrop-filter:blur(15px);position:fixed;width:100%;z-index:1000;transform:translateY(-100%);animation:slideDown .8s cubic-bezier(.23,1,.32,1) forwards;border-bottom:1px solid rgba(100,255,218,.1);}    
+    .logo{font-size:1.8rem;font-weight:700;background:linear-gradient(45deg,#64ffda,#8affdf);-webkit-background-clip:text;-webkit-text-fill-color:transparent;text-shadow:0 0 25px rgba(100,255,218,.3);letter-spacing:-.5px;}
+    .nav-links{display:flex;gap:1.5rem;}
+    .nav-links a{color:#8892b0;text-decoration:none;font-weight:500;transition:all .3s;position:relative;}
+    .cta-button{display:inline-flex;align-items:center;justify-content:center;padding:.9rem 1.8rem;border-radius:50px;font-weight:700;text-decoration:none;transition:all .4s;position:relative;overflow:hidden;border:2px solid #64ffda;background:linear-gradient(135deg,#64ffda 0%,#52d1b8 100%);color:#0a192f;box-shadow:0 4px 25px rgba(100,255,218,.3);font-size:1rem;}
+
+    /* Mobile Menu */
+    .mobile-menu-btn {display: none; background: none; border: none; color: #8892b0; font-size: 1.5rem; cursor: pointer;}
+    .mobile-nav {display: none; position: fixed; top: 70px; left: 0; width: 100%; background: rgba(10,25,47,0.95); backdrop-filter: blur(15px); padding: 1rem 5%; flex-direction: column; z-index: 999; border-top: 1px solid rgba(100,255,218,.1);}
+    .mobile-nav.active {display: flex;}
+
+    /* Hero Section - Updated for Mobile */
+    .hero{padding:10rem 5% 4rem;text-align:center;position:relative;overflow:hidden;min-height:auto;display:flex;flex-direction:column;justify-content:center;align-items:center;}
+    .hero h1{font-size:2.5rem;margin-bottom:1.2rem;line-height:1.2;max-width:900px;background:linear-gradient(45deg,#64ffda,#8affdf);-webkit-background-clip:text;-webkit-text-fill-color:transparent;text-shadow:0 0 25px rgba(100,255,218,.3);}
+    .hero-subhead{font-size:1.2rem;color:#8892b0;margin-bottom:2.5rem;max-width:700px;line-height:1.6;font-weight:400;}
+
+    /* Interactive Demo Section */
+    .interactive-demo {padding:3rem 5%;background:rgba(10,25,47,0.4);}    
+    .demo-container {background:rgba(16,36,64,0.8);border-radius:15px;padding:1.5rem;border:1px solid rgba(100,255,218,0.2);margin:1.5rem auto;max-width:800px;}
+    .demo-header {display:flex;flex-direction:column;gap:0.5rem;margin-bottom:1rem;padding-bottom:1rem;border-bottom:1px solid rgba(100,255,218,0.1);}
+    .demo-input {width:100%;min-height:120px;background:rgba(10,25,47,0.7);border:1px solid rgba(100,255,218,0.3);border-radius:8px;padding:1.2rem;color:#fff;margin-bottom:1.5rem;font-size:1rem;resize:vertical;}
+
+    /* Trial Counter */
+    .trial-counter{background:rgba(100,255,218,0.1);border-radius:50px;padding:.7rem 1.2rem;display:inline-flex;align-items:center;gap:.6rem;margin-bottom:1.5rem;font-size:0.9rem;border:1px solid rgba(100,255,218,0.2);}
+    .counter-number{font-weight:700;color:#64ffda;font-size:1.1rem;}
+
+    /* Response Container */
+    .response-container {display:none;max-width:800px;margin:1.5rem auto 0;}
+    .response-content {background:rgba(10,25,47,0.7);border-radius:8px;padding:1.2rem;color:#8892b0;line-height:1.6;border:1px solid rgba(100,255,218,0.2);}    
+
+    /* Trial Section */
+    .trial-section {padding:3rem 5%;background:rgba(10,25,47,0.6);}    
+    .trial-card {background:rgba(16,36,64,0.8);border-radius:15px;padding:2rem;border:1px solid rgba(100,255,218,0.2);}    
+    .form-group input {width:100%;padding:1rem;border-radius:8px;border:1px solid rgba(100,255,218,0.3);background:rgba(10,25,47,0.7);color:#fff;font-size:1rem;}
+
+    /* Modal */
+    .modal {display:none;position:fixed;z-index:2000;left:0;top:0;width:100%;height:100%;background-color:rgba(10,25,47,0.9);}    
+    .modal-content {background-color:rgba(16,36,64,0.95);margin:15% auto;padding:1.5rem;border:1px solid rgba(100,255,218,0.3);border-radius:15px;width:90%;max-width:500px;position:relative;}
+
+    /* Toast */
+    #replyze-toast {position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:9999;display:none;padding:12px 18px;border-radius:8px;background:rgba(10,25,47,0.95);color:#fff;box-shadow:0 6px 20px rgba(0,0,0,0.5);font-weight:600;}
+
+    @media (max-width: 768px) {
+      .nav-links {display: none;}      
+      .mobile-menu-btn {display: block;}
+      .hero {padding: 8rem 5% 3rem;}
+      .hero h1 {font-size:2rem;}
+    }
+  </style>
+</head>
+<body>
+  <div class="progress-bar" id="progressBar"></div>
+
+  <!-- Toast for non-blocking messages -->
+  <div id="replyze-toast" role="status" aria-live="polite"></div>
+
+  <!-- Updated Urgency Banner (static/trustworthy) -->
+  <div class="urgency-banner-updated" style="background:linear-gradient(90deg,#f72585 0%,#b5179e 100%);padding:10px 0;text-align:center;font-weight:600;">
+    <span>⏰ Personal Onboarding: <strong>2</strong> spots left this week — booked weekly, limited capacity.</span>
+  </div>
+
+  <nav class="nav">
+    <div class="logo">REPLYZEAI</div>
+    <div class="nav-links">
+      <a href="#how-it-works">How It Works</a>
+      <a href="#proof">Proof</a>
+      <a href="#trial">Free Trial</a>
+      <a href="#testimonials">Testimonials</a>
+    </div>
+    <a class="cta-button" href="#trial">Get My Free Trial Now</a>
+    <button class="mobile-menu-btn" id="mobileMenuBtn">
+      <i class="fas fa-bars"></i>
+    </button>
+  </nav>
+
+  <!-- Mobile Navigation -->
+  <div class="mobile-nav" id="mobileNav">
+    <a href="#how-it-works">How It Works</a>
+    <a href="#proof">Proof</a>
+    <a href="#trial">Free Trial</a>
+    <a href="#testimonials">Testimonials</a>
+    <a class="cta-button" href="#trial" style="margin-top:1rem;justify-content:center;">Get My Free Trial Now</a>
+  </div>
+
+  <section class="hero">
+    <h1>Stop Losing Open House Leads to Faster Agents</h1>
+    <p class="hero-subhead">REPLYZEAI helps solo agents respond to <strong>every lead in 60 seconds</strong> — turning more "maybe's" into booked appointments while you focus on closings.</p>
+    <a class="cta-button" href="#demo"><i class="fas fa-robot"></i> See How It Works For Your Business</a>
+  </section>
+
+  <section class="interactive-demo" id="demo">
+    <h2 style="font-size:2rem;color:#64ffda;margin-bottom:1.2rem;text-align:center;">See Exactly How REPLYZEAI Works For YOUR Leads</h2>
+    <p style="text-align:center;color:#8892b0;max-width:800px;margin:0 auto 2rem;line-height:1.6;">Tired of leads going cold while you're busy? See how our AI captures and converts leads in real-time.</p>
+
+    <div class="demo-container">
+      <div class="demo-header">
+        <div class="demo-title">1. Paste Your Last Lead Message Here</div>
+        <div style="color: #64ffda; font-size: 0.9rem;">Watch REPLYZEAI craft the perfect response</div>
+      </div>
+
+      <div class="trial-counter"><i class="fas fa-gift"></i> <strong>FREE DEMO:</strong> <span class="counter-number" id="ai-counter">loading…</span></div>
+
+      <textarea class="demo-input" id="demo-input" placeholder="Paste a lead message here...">Hi, I saw your sign at 123 Elm St. Is the open house still this Sunday? What time? - Jennifer</textarea>
+      <button class="cta-button" style="width:100%;" id="generate-btn"><i class="fas fa-robot"></i> See My AI Response Now</button>
+
+      <div class="response-container" id="response-container">
+        <div class="demo-header" style="margin-top:1rem;">
+          <div class="demo-title">2. Your Personalized AI Response</div>
+          <div style="color: #64ffda; font-size: 0.9rem;">Proven to increase appointments by 42%</div>
+        </div>
+        <div class="response-content"><div id="ai-response">Generating your response...</div></div>
+        <div style="display:flex;flex-direction:column;gap:10px;margin-top:1.5rem;">
+          <button class="cta-button" id="copy-btn" style="width:100%;"><i class="fas fa-copy"></i> Copy & Use This Response</button>
+          <button class="cta-button" id="trial-cta" style="width:100%;" onclick="document.querySelector('#trial').scrollIntoView({behavior:'smooth'})"><i class="fas fa-rocket"></i> Get Your FREE 30-Day Trial</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="trial-section" id="trial">
+    <div class="trial-container">
+      <h2 style="font-size:2rem;color:#64ffda;margin-bottom:1rem;text-align:center;">Ready to Stop Losing Leads to Faster Agents?</h2>
+      <p style="color:#8892b0;max-width:600px;margin:0 auto 2rem;line-height:1.6;text-align:center;">Join 3,247+ agents who booked <strong>17+ more appointments per month</strong> without hiring additional staff.</p>
+
+      <div class="trial-card">
+        <div style="display:flex;flex-direction:column;gap:1.2rem;margin-bottom:1.5rem;">
+          <div>
+            <h3 style="color:#64ffda;margin-bottom:0.6rem;">You'll Get REAL Results:</h3>
+            <ul style="color:#8892b0;list-style-type:none;padding-left:0;margin:0;">
+              <li style="margin-bottom:0.5rem;"><i class="fas fa-check" style="color:#64ffda;margin-right:0.5rem;"></i><strong>Convert 40% more leads</strong> into appointments</li>
+              <li style="margin-bottom:0.5rem;"><i class="fas fa-check" style="color:#64ffda;margin-right:0.5rem;"></i><strong>Save 3+ hours daily</strong> on lead follow-up</li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- Email-only signup (magic link) -->
+        <form class="trial-form" id="trial-form">
+          <div id="form-message" class="form-message"></div>
+
+          <div class="form-group">
+            <label for="name">Your Name (optional)</label>
+            <input type="text" id="name" placeholder="What should we call you?">
+          </div>
+
+          <div class="form-group">
+            <label for="email">Your Best Email</label>
+            <input type="email" id="email" placeholder="Where should we send your login?" required>
+          </div>
+
+          <button class="cta-button" style="width:100%;padding:1.2rem;margin-top:1rem;" type="submit" id="signup-button"><i class="fas fa-rocket"></i> Start My FREE 30-Day Trial (No CC)</button>
+          <p style="color:#8892b0;font-size:0.9rem;margin-top:1rem;text-align:center;"><strong>No credit card required</strong> • Join 3,247+ agents • Cancel anytime</p>
+        </form>
+      </div>
+    </div>
+  </section>
+
+  <!-- Email Capture Modal (for script download) -->
+  <div id="email-modal" class="modal">
+    <div class="modal-content"><span class="close-modal" onclick="closeModal()">&times;</span>
+      <h2 style="color:#64ffda;margin-bottom:1rem;">Get Your Free Script Guide</h2>
+      <p style="color:#8892b0;margin-bottom:1rem;">Enter your email to download the complete Two-Line RSVP script guide.</p>
+      <form id="email-form">
+        <div class="form-group"><label for="modal-email">Email Address</label><input type="email" id="modal-email" placeholder="Your email address" required></div>
+        <button class="cta-button" style="width:100%;" type="submit"><i class="fas fa-download"></i> Download Now</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Include Supabase JS -->
+  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+
+  <script>
+    // -----------------------------
+    // Config — update as needed
+    // -----------------------------
+    const SUPABASE_URL = 'https://skxzfkudduqrubtgtodp.supabase.co';
+    const SUPABASE_KEY = 'PUBLIC_ANON_KEY_REPLACE_ME'; // replace with your anon key or keep existing if you're testing
+    window.supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    // Simple event tracker (beacon)
+    function trackEvent(name, props = {}) {
+      try {
+        const payload = JSON.stringify({ event: name, ts: new Date().toISOString(), ...props });
+        navigator.sendBeacon('/api/track', payload);
+      } catch (e) {
+        // ignore tracking errors
+        console.warn('trackEvent error', e);
+      }
+    }
+
+    // -----------------------------
+    // Toast helper
+    // -----------------------------
+    function showToast(msg, type = 'info', timeout = 3500) {
+      const el = document.getElementById('replyze-toast');
+      if (!el) return alert(msg);
+      el.textContent = msg;
+      el.style.display = 'block';
+      el.style.background = type === 'error' ? 'rgba(255,96,92,0.95)' : (type === 'success' ? 'rgba(0,202,78,0.95)' : 'rgba(10,25,47,0.95)');
+      clearTimeout(el._t);
+      el._t = setTimeout(() => { el.style.display = 'none'; }, timeout);
+    }
+
+    // -----------------------------
+    // App initialization
+    // -----------------------------
+    function initializeApp() {
+      initUI();
+      initRateLimiting();
+      attachHandlers();
+      checkForLeadIdAndPrefill();
+      autoGenerateOnLoad();
+      trackEvent('landing_view', { path: location.pathname });
+    }
+
+    // Mobile menu UI
+    function initUI() {
+      const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+      const mobileNav = document.getElementById('mobileNav');
+      if (mobileMenuBtn) mobileMenuBtn.addEventListener('click', () => { mobileNav.classList.toggle('active'); mobileMenuBtn.innerHTML = mobileNav.classList.contains('active') ? '<i class="fas fa-times"></i>' : '<i class="fas fa-bars"></i>'; });
+    }
+
+    // -----------------------------
+    // Rate limiting: unlimited for session, cookie fallback
+    // -----------------------------
+    let aiCount = 3;
+    let aiUnlimited = false;
+
+    function setCookie(name, value, days) {
+      let expires = '';
+      if (days) { const date = new Date(); date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000)); expires = '; expires=' + date.toUTCString(); }
+      document.cookie = name + '=' + (value || '') + expires + '; path=/; SameSite=Lax';
+    }
+    function getCookie(name) {
+      const nameEQ = name + '='; const ca = document.cookie.split(';');
+      for (let i = 0; i < ca.length; i++) { let c = ca[i]; while (c.charAt(0) === ' ') c = c.substring(1, c.length); if (c.indexOf(nameEQ) === 0) return c.substring(nameEQ.length, c.length); }
+      return null;
+    }
+
+    function initRateLimiting() {
+      // If sessionStorage marks this as an unlimited session, give unlimited replies while the tab is open
+      if (sessionStorage.getItem('replyze_unlimited_session')) {
+        aiUnlimited = true;
+      } else {
+        // mark this session as unlimited once (first visit in tab)
+        sessionStorage.setItem('replyze_unlimited_session', '1');
+        aiUnlimited = true;
+      }
+
+      // Fall back to cookie-stored allowance for returning users (ignored while aiUnlimited true)
+      const trialsCookie = getCookie('free_trials');
+      if (trialsCookie) {
+        try { const trials = JSON.parse(trialsCookie); if (typeof trials.ai === 'number') aiCount = trials.ai; } catch (e) {}
+      }
+
+      document.getElementById('ai-counter').textContent = aiUnlimited ? 'unlimited (this session)' : aiCount;
+    }
+
+    function updateTrialsCookie() {
+      const trials = { ai: aiCount };
+      setCookie('free_trials', JSON.stringify(trials), 7);
+    }
+
+    // -----------------------------
+    // Generate response (calls your backend)
+    // -----------------------------
+    async function generateResponse() {
+      const inputEl = document.getElementById('demo-input');
+      const input = inputEl ? inputEl.value.trim() : '';
+      const leadId = window.currentLeadId || null;
+      const responseContainer = document.getElementById('response-container');
+      const aiResponse = document.getElementById('ai-response');
+      const generateBtn = document.getElementById('generate-btn');
+
+      if (!input) { showToast('Please paste a lead message or use our example.', 'error'); return; }
+
+      // If not unlimited, check count
+      if (!aiUnlimited && aiCount <= 0) {
+        showToast('No more free AI responses. Please sign up for a free trial.', 'error');
+        document.querySelector('#trial').scrollIntoView({ behavior: 'smooth' });
+        return;
+      }
+
+      // If not unlimited, decrement
+      if (!aiUnlimited && typeof aiCount === 'number') { aiCount--; updateTrialsCookie(); document.getElementById('ai-counter').textContent = aiCount; }
+
+      // Show loading state
+      if (generateBtn) { generateBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating...'; generateBtn.disabled = true; }
+      if (aiResponse) aiResponse.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating your response...';
+      if (responseContainer) responseContainer.style.display = 'block';
+
+      trackEvent('generate_clicked', { lead_id: leadId });
+
+      try {
+        const res = await fetch('https://website-1-f6l8.onrender.com/api/generate-reply-prompt', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ prompt: input })
+        });
+        if (!res.ok) throw new Error('API request failed');
+        const data = await res.json();
+        aiResponse.textContent = data.reply || data.text || JSON.stringify(data);
+
+        // record usage if needed
+        if (leadId) { fetch('https://website-1-f6l8.onrender.com/api/record-ai-usage', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ lead_id: leadId }) }).catch(() => {}); }
+
+        trackEvent('response_viewed', { lead_id: leadId });
+      } catch (err) {
+        console.error(err);
+        aiResponse.textContent = "Hi there! Thanks for your message. I'd be happy to help you with your real estate needs. When were you thinking of coming by for a viewing?";
+        showToast('Unable to generate response (fallback shown).', 'error');
+      } finally {
+        if (generateBtn) { generateBtn.innerHTML = '<i class="fas fa-robot"></i> Generate AI Response'; generateBtn.disabled = false; }
+        if (responseContainer) responseContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+
+      // If a non-unlimited session and aiCount hits 0, nudge to signup
+      if (!aiUnlimited && aiCount === 0) {
+        setTimeout(() => { showToast("You've used your free AI responses! Start your free trial for unlimited access.", 'info'); document.querySelector('#trial').scrollIntoView({ behavior: 'smooth' }); }, 900);
+      }
+    }
+
+    // -----------------------------
+    // Progressive copy: allow first copy, prompt signup on second
+    // -----------------------------
+    let copiedOnce = false;
+    document.addEventListener('click', (e) => { if (e.target && e.target.id === 'copy-btn') copyResponse(); });
+
+    function copyResponse() {
+      const responseEl = document.getElementById('ai-response');
+      if (!responseEl) return showToast('No response to copy.', 'error');
+      const text = responseEl.textContent || '';
+      if (!text.trim()) return showToast('No response to copy.', 'error');
+
+      navigator.clipboard.writeText(text).then(() => {
+        if (!copiedOnce) {
+          copiedOnce = true;
+          showToast('Response copied — try it with a live lead. Want unlimited replies? Start the 30-day trial (no CC).', 'success', 5000);
+          trackEvent('copy_clicked_first');
+        } else {
+          // second copy intent: ask for signup
+          trackEvent('copy_clicked_second');
+          // open trial area or modal
+          document.querySelector('#trial').scrollIntoView({ behavior: 'smooth' });
+          showToast('Almost there — enter your email to start your free trial.', 'info', 4000);
+        }
+      }).catch((err) => { console.error(err); showToast('Unable to copy. Select and copy manually.', 'error'); });
+    }
+
+    // -----------------------------
+    // Signup (magic link via Supabase OTP)
+    // -----------------------------
+    document.addEventListener('submit', async (e) => {
+      if (e.target && e.target.id === 'trial-form') {
+        e.preventDefault();
+        const email = document.getElementById('email').value.trim();
+        const name = document.getElementById('name').value.trim();
+        const btn = document.getElementById('signup-button');
+        const original = btn.innerHTML;
+        if (!email) { showToast('Enter your email address', 'error'); return; }
+
+        btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending link...';
+        try {
+          const { data, error } = await window.supabase.auth.signInWithOtp({ email });
+          if (error) throw error;
+          // Optionally store name to your profiles table after user confirms (deferred)
+          showToast('Magic link sent — check your email to finish signup', 'success', 6000);
+          trackEvent('signup_magiclink_sent', { email });
+        } catch (err) {
+          console.error(err);
+          showToast(err.message || 'Signup failed', 'error', 5000);
+        } finally { btn.disabled = false; btn.innerHTML = original; }
+      }
+
+      // email modal submit (script download)
+      if (e.target && e.target.id === 'email-form') {
+        e.preventDefault();
+        const email = document.getElementById('modal-email').value.trim();
+        if (!email) return showToast('Enter a valid email', 'error');
+        // send to backend here if needed
+        trackEvent('script_download', { email });
+        // create and trigger download
+        const scriptContent = `Two-Line RSVP Script Guide\n\nPrimary Script:\n\"Hi [Name], thanks for your interest in our open house at [Address] this weekend! We'd love to have you. Please let us know what time works best for you, and we'll send over all the details. Looking forward to meeting you!\"\n\nTips:\n- Personalize with the property address\n- Send within 1 hour of lead inquiry\n- Include specific time options when possible`;
+        const blob = new Blob([scriptContent], { type: 'text/plain' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a'); a.href = url; a.download = 'ReplyzeAI-Two-Line-RSVP-Script.txt'; document.body.appendChild(a); a.click(); a.remove(); window.URL.revokeObjectURL(url);
+        closeModal();
+        showToast('Script downloaded — check your downloads folder', 'success');
+      }
+    });
+
+    function closeModal() { document.getElementById('email-modal').style.display = 'none'; }
+
+    // -----------------------------
+    // Prefill demo from lead_id
+    // -----------------------------
+    function checkForLeadIdAndPrefill() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const leadId = urlParams.get('lead_id');
+      if (leadId) {
+        window.currentLeadId = leadId;
+        // fetch lead details (best-effort) and prefill demo input
+        fetch(`https://website-1-f6l8.onrender.com/api/leads/${leadId}`).then(r => r.json()).then(data => {
+          if (data && data.lead) {
+            const msg = data.lead.message || data.lead.text || `Hi, I saw your sign at ${data.lead.address || 'the listing'}. Is the open house still on?`;
+            const el = document.getElementById('demo-input'); if (el) el.value = msg;
+            trackEvent('lead_prefill', { lead_id: leadId });
+          }
+        }).catch(() => {});
+      }
+    }
+
+    // -----------------------------
+    // Auto-generate on load once per session or when lead_id present
+    // -----------------------------
+    function autoGenerateOnLoad() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const leadId = urlParams.get('lead_id');
+      const already = sessionStorage.getItem('replyze_auto_generated');
+      if (leadId || !already) {
+        setTimeout(() => { if (typeof generateResponse === 'function') generateResponse(); sessionStorage.setItem('replyze_auto_generated', '1'); }, 500);
+      }
+    }
+
+    // -----------------------------
+    // Attach button handlers
+    // -----------------------------
+    function attachHandlers() {
+      const gb = document.getElementById('generate-btn'); if (gb) gb.addEventListener('click', () => { generateResponse(); });
+      // close modal when clicking outside
+      window.onclick = function(event) { const modal = document.getElementById('email-modal'); if (event.target == modal) closeModal(); };
+    }
+
+    // -----------------------------
+    // Start
+    // -----------------------------
+    document.addEventListener('DOMContentLoaded', initializeApp);
+  </script>
+
+  <!-- Tracking helper and hidden lead-id field -->
+  <input type="hidden" id="lead-id" name="lead_id">
+</body>
+</html>
