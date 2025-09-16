@@ -211,15 +211,34 @@
     // -----------------------------
     // Supabase Configuration
     // -----------------------------
-    // Replace these with your actual Supabase credentials
+    let supabaseClient;
+    
     function initializeSupabase() {
       // Replace these with your actual Supabase credentials
       const SUPABASE_URL = 'https://skxzfkudduqrubtgtodp.supabase.co';
       const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNreHpma3VkZHVxcnVidGd0b2RwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDU1ODAwNzMsImV4cCI6MjA2MTE1NjA3M30.Wj3V5-swysAz8xAbA4lKmo-NNu_mv1UW_X4BgFNq0ag';
       
-      // Initialize Supabase client
-      supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-      console.log('Supabase initialized');
+      // Initialize Supabase client with proper auth configuration
+      supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+        auth: {
+          autoRefreshToken: true,
+          persistSession: true,
+          detectSessionInUrl: true,
+          flowType: 'pkce',
+          redirectTo: 'https://xxxloveitxxx.github.io'
+        }
+      });
+      console.log('Supabase initialized with redirect');
+    }
+
+    // Initialize auth listener
+    function initAuthListener() {
+      supabaseClient.auth.onAuthStateChange((event, session) => {
+        if (event === 'SIGNED_IN') {
+          showToast('Successfully signed in!', 'success');
+          // You can redirect or update UI here
+        }
+      });
     }
 
     // Simple event tracker (beacon) - FIXED to use GET instead of POST
@@ -285,6 +304,7 @@
       attachHandlers();
       checkForLeadIdAndPrefill();
       autoGenerateOnLoad();
+      initAuthListener(); // Add auth listener
       trackEvent('landing_view', { path: location.pathname });
     }
 
@@ -491,9 +511,11 @@
         btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending link...';
         
         try {
-          const { data, error } = await supabase.auth.signInWithOtp({ 
+          // Use the correct signInWithOtp method with proper options
+          const { data, error } = await supabaseClient.auth.signInWithOtp({ 
             email,
             options: {
+              emailRedirectTo: 'https://xxxloveitxxx.github.io',
               data: {
                 name: name || '',
                 user_type: 'agent'
@@ -604,7 +626,10 @@
     // -----------------------------
     // Start
     // -----------------------------
-    document.addEventListener('DOMContentLoaded', initializeApp);
+    document.addEventListener('DOMContentLoaded', () => {
+      initializeSupabase(); // Initialize Supabase first
+      initializeApp(); // Then initialize the app
+    });
   </script>
 
   <!-- Tracking helper and hidden lead-id field -->
