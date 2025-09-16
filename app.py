@@ -558,7 +558,7 @@ def generate_reply_prompt():
     if request.method == "OPTIONS":
         # Handle preflight request
         response = jsonify({"status": "ok"})
-        response.headers.add("Access-Control-Allow-Origin", "https://closefaster.vercel.app")
+        response.headers.add("Access-Control-Allow-Origin", "https://xxxloveitxxx.github.io/tha-clone-of-admin/")
         response.headers.add("Access-Control-Allow-Headers", "Content-Type")
         return response
 
