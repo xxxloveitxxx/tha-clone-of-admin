@@ -473,7 +473,7 @@ def track_click(lead_id, campaign_id):
         }).execute()
         
         # Redirect to the demo page with lead_id as parameter
-        demo_url = "https://closefaster.vercel.app/templates/demo2.html"
+        demo_url = "https://xxxloveitxxx.github.io/tha-clone-of-admin/templates/demo6.html"
         redirect_url = f"{demo_url}?lead_id={lead_id}&campaign_id={campaign_id}"
         if email_queue_id:
             redirect_url += f"&eqid={email_queue_id}"
