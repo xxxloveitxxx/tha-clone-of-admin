@@ -396,7 +396,106 @@
       const trials = { ai: aiCount };
       setCookie('free_trials', JSON.stringify(trials), 7);
     }
+    //------------------------------------------------
+    // Add this near the top of your script section
+function getUrlParams() {
+  const urlParams = new URLSearchParams(window.location.search);
+  return {
+    lead_id: urlParams.get('lead_id'),
+    campaign_id: urlParams.get('campaign_id'),
+    eqid: urlParams.get('eqid')
+  };
+}
 
+async function fetchLeadData(leadId) {
+  try {
+    const response = await fetch(`https://tha-clone-of-admin.onrender.com/api/leads/${leadId}`);
+    if (response.ok) {
+      const data = await response.json();
+      return data.lead;
+    }
+    return null;
+  } catch (error) {
+    console.error('Error fetching lead data:', error);
+    return null;
+  }
+}
+
+async function fetchLeadAIUsage(leadId) {
+  try {
+    const response = await fetch(`https://tha-clone-of-admin.onrender.com/api/leads/${leadId}/ai-usage`);
+    if (response.ok) {
+      const data = await response.json();
+      return data.ai_usage;
+    }
+    return null;
+  } catch (error) {
+    console.error('Error fetching AI usage:', error);
+    return null;
+  }
+}
+
+function updateAIUsageDisplay(aiUsage) {
+  const usageCount = aiUsage.usage_count || 0;
+  const counter = document.getElementById('ai-counter');
+  if (counter) {
+    counter.innerHTML = `${usageCount} AI responses generated for this lead`;
+  }
+}
+
+function personalizeExperience(leadData) {
+  if (!leadData) return;
+  
+  const name = leadData.name || leadData.email.split('@')[0];
+  const city = leadData.city || 'your area';
+  const brokerage = leadData.brokerage || '';
+
+  // Update page content with lead data
+  const heroTitle = document.querySelector('.hero h1');
+  if (heroTitle) {
+    heroTitle.textContent = `Hi ${name}, Stop Losing Open House Leads to Faster Agents`;
+  }
+
+  const demoTitle = document.querySelector('.interactive-demo h2');
+  if (demoTitle) {
+    demoTitle.textContent = `See Exactly How REPLYZEAI Works For ${name}'s Leads`;
+  }
+
+  // Update input placeholder
+  const demoInput = document.getElementById('demo-input');
+  if (demoInput) {
+    demoInput.placeholder = `Paste a lead message here, ${name}...`;
+  }
+}
+
+// Update the initializeApp function
+async function initializeApp() {
+  initUI();
+  initProgressBar();
+  initRateLimiting();
+  attachHandlers();
+  
+  // Check for lead ID in URL parameters
+  const params = getUrlParams();
+  if (params.lead_id) {
+    document.getElementById('lead-id').value = params.lead_id;
+    
+    // Fetch lead data and personalize experience
+    const leadData = await fetchLeadData(params.lead_id);
+    if (leadData) {
+      personalizeExperience(leadData);
+      
+      // Check AI usage for this lead
+      const aiUsage = await fetchLeadAIUsage(params.lead_id);
+      if (aiUsage) {
+        updateAIUsageDisplay(aiUsage);
+      }
+    }
+  }
+  
+  trackEvent('landing_view', { path: location.pathname });
+}
+    //------------------------------------------------------
     // -----------------------------
     // Generate response - FIXED VERSION
     // -----------------------------
