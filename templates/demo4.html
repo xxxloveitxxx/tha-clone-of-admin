@@ -12,6 +12,7 @@
     @keyframes floatElement { 0%,100%{transform:translateY(0)rotate(0deg);}50%{transform:translateY(-20px)rotate(3deg);} }
     @keyframes pulse { 0%{box-shadow:0 0 0 0 rgba(247,37,133,0.4);}70%{box-shadow:0 0 0 12px rgba(247,37,133,0);}100%{box-shadow:0 0 0 0 rgba(247,37,133,0);} }
     @keyframes slideDown { from{transform:translateY(-100%);}to{transform:translateY(0);} }
+    @keyframes slideIn { from{transform:translateX(-100%);}to{transform:translateX(0);} }
 
     /* Base Styles */
     *{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;}
@@ -27,12 +28,16 @@
     .cta-button{display:inline-flex;align-items:center;justify-content:center;padding:.9rem 1.8rem;border-radius:50px;font-weight:700;text-decoration:none;transition:all .4s;position:relative;overflow:hidden;border:2px solid #64ffda;background:linear-gradient(135deg,#64ffda 0%,#52d1b8 100%);color:#0a192f;box-shadow:0 4px 25px rgba(100,255,218,.3);font-size:1rem;cursor:pointer;}
     .cta-button:hover{transform:translateY(-2px);box-shadow:0 6px 30px rgba(100,255,218,.5);}
 
-    /* Mobile Menu */
+    /* Mobile Menu - FIXED */
     .mobile-menu-btn {display: none; background: none; border: none; color: #8892b0; font-size: 1.5rem; cursor: pointer; z-index: 1001;}
-    .mobile-nav {display: none; position: fixed; top: 70px; left: 0; width: 100%; background: rgba(10,25,47,0.98); backdrop-filter: blur(15px); padding: 1rem 5%; flex-direction: column; z-index: 999; border-top: 1px solid rgba(100,255,218,.1);}
-    .mobile-nav a {color: #8892b0; text-decoration: none; padding: 0.8rem 0; font-weight: 500; transition: color 0.3s; font-size: 1.1rem;}
+    .mobile-nav {display: flex; position: fixed; top: 0; left: 0; width: 80%; max-width: 300px; height: 100vh; background: rgba(10,25,47,0.98); backdrop-filter: blur(15px); padding: 5rem 1.5rem 2rem; flex-direction: column; z-index: 999; transform: translateX(-100%); transition: transform 0.3s ease; box-shadow: 2px 0 10px rgba(0,0,0,0.3);}
+    .mobile-nav a {color: #8892b0; text-decoration: none; padding: 1rem 0; font-weight: 500; transition: color 0.3s; font-size: 1.1rem; border-bottom: 1px solid rgba(100,255,218,0.1);}
     .mobile-nav a:hover {color: #64ffda;}
-    .mobile-nav.active {display: flex;}
+    .mobile-nav.active {transform: translateX(0); animation: slideIn 0.3s ease;}
+    
+    /* Mobile menu overlay */
+    .mobile-overlay {display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 998;}
+    .mobile-overlay.active {display: block;}
 
     /* Hero Section */
     .hero{padding:10rem 5% 4rem;text-align:center;position:relative;overflow:hidden;min-height:auto;display:flex;flex-direction:column;justify-content:center;align-items:center;}
@@ -94,7 +99,6 @@
       /* Improved mobile navigation */
       .mobile-nav a {
         padding: 1rem 0;
-        border-bottom: 1px solid rgba(100,255,218,0.1);
       }
       
       /* Mobile-optimized buttons */
@@ -235,6 +239,10 @@
       .hero {
         padding-top: calc(40px + 70px + 4rem + env(safe-area-inset-top));
       }
+      
+      .mobile-nav {
+        padding-top: calc(5rem + env(safe-area-inset-top));
+      }
     }
   </style>
 </head>
@@ -263,13 +271,14 @@
     </button>
   </nav>
 
-  <!-- Mobile Navigation -->
+  <!-- Mobile Navigation - FIXED -->
+  <div class="mobile-overlay" id="mobileOverlay"></div>
   <div class="mobile-nav" id="mobileNav">
     <a href="#how-it-works" onclick="closeMobileMenu()">How It Works</a>
     <a href="#proof" onclick="closeMobileMenu()">Proof</a>
     <a href="#trial" onclick="closeMobileMenu()">Free Trial</a>
     <a href="#testimonials" onclick="closeMobileMenu()">Testimonials</a>
-    <a class="cta-button" href="#trial" style="margin-top:1rem;justify-content:center;" onclick="closeMobileMenu()">Get My Free Trial Now</a>
+    <a class="cta-button" href="#trial" style="margin-top:1.5rem;justify-content:center;" onclick="closeMobileMenu()">Get My Free Trial Now</a>
   </div>
 
   <section class="hero">
@@ -368,7 +377,7 @@
     function initializeSupabase() {
       // Replace these with your actual Supabase credentials
       const SUPABASE_URL = 'https://skxzfkudduqrubtgtodp.supabase.co';
-      const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNreHpma3VkZHVxcnVidGd0b2RwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDU1ODAwNzMsImV4cCI6MjA2MTE1NjA3M30.Wj3V5-swysAz8xAbA4lKmo-NNu_mv1UW_X4BgFNq0ag';
+      const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhbmFzZSIsInJlZiI6InNreHpma3VkZHVxcnVidGd0b2RwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDU1ODAwNzMsImV4cCI6MjA2MTE1NjA3M30.Wj3V5-swysAz8xAbA4lKmo-NNu_mv1UW_X4BgFNq0ag';
       
       // Initialize Supabase client with proper auth configuration
       supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
@@ -423,14 +432,34 @@
     }
 
     // -----------------------------
-    // Mobile menu helper
+    // Mobile menu helper - FIXED
     // -----------------------------
+    function toggleMobileMenu() {
+      const mobileNav = document.getElementById('mobileNav');
+      const mobileOverlay = document.getElementById('mobileOverlay');
+      const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+      
+      mobileNav.classList.toggle('active');
+      mobileOverlay.classList.toggle('active');
+      
+      const isExpanded = mobileNav.classList.contains('active');
+      mobileMenuBtn.innerHTML = isExpanded ? '<i class="fas fa-times"></i>' : '<i class="fas fa-bars"></i>'; 
+      mobileMenuBtn.setAttribute('aria-expanded', isExpanded);
+      
+      // Prevent body scrolling when menu is open
+      document.body.style.overflow = isExpanded ? 'hidden' : '';
+    }
+
     function closeMobileMenu() {
       const mobileNav = document.getElementById('mobileNav');
+      const mobileOverlay = document.getElementById('mobileOverlay');
       const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+      
       mobileNav.classList.remove('active');
+      mobileOverlay.classList.remove('active');
       mobileMenuBtn.innerHTML = '<i class="fas fa-bars"></i>';
       mobileMenuBtn.setAttribute('aria-expanded', 'false');
+      document.body.style.overflow = '';
     }
 
     // -----------------------------
@@ -461,30 +490,31 @@
       trackEvent('landing_view', { path: location.pathname });
     }
 
-    // Mobile menu UI
+    // Mobile menu UI - FIXED
     function initUI() {
       const mobileMenuBtn = document.getElementById('mobileMenuBtn');
-      const mobileNav = document.getElementById('mobileNav');
-      if (mobileMenuBtn) mobileMenuBtn.addEventListener('click', () => { 
-        mobileNav.classList.toggle('active'); 
-        const isExpanded = mobileNav.classList.contains('active');
-        mobileMenuBtn.innerHTML = isExpanded ? '<i class="fas fa-times"></i>' : '<i class="fas fa-bars"></i>'; 
-        mobileMenuBtn.setAttribute('aria-expanded', isExpanded);
-      });
+      const mobileOverlay = document.getElementById('mobileOverlay');
       
-      // Close mobile menu when clicking outside
-      document.addEventListener('click', (e) => {
-        if (mobileNav.classList.contains('active') && 
-            !mobileNav.contains(e.target) && 
-            e.target !== mobileMenuBtn &&
-            !mobileMenuBtn.contains(e.target)) {
-          closeMobileMenu();
-        }
+      if (mobileMenuBtn) {
+        mobileMenuBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          toggleMobileMenu();
+        });
+      }
+      
+      if (mobileOverlay) {
+        mobileOverlay.addEventListener('click', closeMobileMenu);
+      }
+      
+      // Close mobile menu when clicking on links
+      const mobileLinks = document.querySelectorAll('.mobile-nav a');
+      mobileLinks.forEach(link => {
+        link.addEventListener('click', closeMobileMenu);
       });
       
       // Close mobile menu on escape key
       document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape' && mobileNav.classList.contains('active')) {
+        if (e.key === 'Escape') {
           closeMobileMenu();
         }
       });
