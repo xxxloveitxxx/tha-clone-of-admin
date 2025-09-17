@@ -382,7 +382,7 @@
       if (!aiUnlimited && typeof aiCount === 'number') { aiCount--; updateTrialsCookie(); document.getElementById('ai-counter').textContent = aiCount; }
 
       // Show loading state
-      if (generateBtn) { generateBtn.innerHTML = '<i class="fas fa-spinner fa-spin'></i> Generating...'; generateBtn.disabled = true; }
+      if (generateBtn) { generateBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating...'; generateBtn.disabled = true; }
       if (aiResponse) aiResponse.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating your response...';
       if (responseContainer) responseContainer.style.display = 'block';
 
